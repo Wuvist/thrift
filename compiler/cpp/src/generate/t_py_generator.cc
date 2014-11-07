@@ -1679,13 +1679,24 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
       "if cmd == '" << (*f_iter)->get_name() << "':" << endl <<
       "  if len(args) != " << num_args << ":" << endl <<
       "    print('" << (*f_iter)->get_name() << " requires " << num_args << " args')" << endl <<
-      "    sys.exit(1)" << endl <<
-      "  pp.pprint(client." << (*f_iter)->get_name() << "(";
+      "    sys.exit(1)" << endl;
+
+    for (int i = 0; i < num_args; ++i) {
+      if (!args[i]->get_type()->is_string()) {
+        f_remote <<
+        "  args" << i << " = " << type_name(args[i]->get_type()) << "()"  << endl <<
+        "  for k, v in eval(args[" << i << "]).iteritems():"  << endl <<
+        "    args" << i << ".__dict__[k] = v" << endl ;
+      }
+    }
+
+    f_remote <<
+    "  pp.pprint(client." << (*f_iter)->get_name() << "(";
     for (int i = 0; i < num_args; ++i) {
       if (args[i]->get_type()->is_string()) {
         f_remote << "args[" << i << "],";
       } else {
-        f_remote << "eval(args[" << i << "]),";
+        f_remote << "args" << i << ",";
       }
     }
     f_remote << "))" << endl;
